@@ -1,0 +1,15 @@
+# Segredos e configs locais
+.env
+*.env
+!.env.example
+frigate/config.yml
+frigate/*.db*
+uploader/config.yaml
+# Dados
+storage/
+*.sqlite
+# Python/Node
+__pycache__/
+.venv/
+node_modules/
+*.pyc

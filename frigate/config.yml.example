@@ -1,0 +1,63 @@
+# Copie para frigate/config.yml. Sem segredos aqui: use {FRIGATE_*} do .env.
+# Schema de retenção: Frigate >= 0.16 (continuous/motion). Confira ao trocar de versão.
+
+mqtt:
+  enabled: false
+
+auth:
+  enabled: true
+
+telemetry:
+  version_check: false   # sem chamadas externas de verificação de versão
+
+detectors:
+  cpu1:
+    type: cpu
+    num_threads: 3
+
+go2rtc:
+  streams:
+    # Única conexão com a câmera: RTSP sobre UDP, H.265 copiado (gravação).
+    cam_hevc:
+      - "ffmpeg:rtsp://{FRIGATE_CAM_USER}:{FRIGATE_CAM_PASSWORD}@{FRIGATE_CAM_HOST}:554/onvif1#input=rtsp/udp#video=copy"
+    # Derivado do stream acima (sem 2ª conexão): H.264 para live e detecção.
+    cam_h264:
+      - "ffmpeg:cam_hevc#video=h264"
+
+cameras:
+  cam:
+    ffmpeg:
+      inputs:
+        - path: rtsp://127.0.0.1:8554/cam_hevc
+          input_args: preset-rtsp-restream
+          roles: [record]
+        - path: rtsp://127.0.0.1:8554/cam_h264
+          input_args: preset-rtsp-restream
+          roles: [detect]
+    detect:
+      enabled: true
+      width: 1920
+      height: 1080
+      fps: 5
+    motion:
+      threshold: 30
+    record:
+      enabled: true
+      continuous:
+        days: 0          # não grava 24h
+      motion:
+        days: 3          # segmentos com movimento
+      alerts:
+        retain:
+          days: 14
+          mode: motion
+      detections:
+        retain:
+          days: 7
+          mode: motion
+    snapshots:
+      enabled: true
+      retain:
+        default: 14
+    live:
+      stream_name: cam_h264

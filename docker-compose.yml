@@ -1,0 +1,19 @@
+# VPS: Frigate. (uploader entra na Etapa 3)
+services:
+  frigate:
+    image: ghcr.io/blakeblackshear/frigate:${FRIGATE_VERSION:?defina FRIGATE_VERSION no .env}
+    container_name: frigate
+    restart: unless-stopped
+    shm_size: 256mb
+    env_file: .env          # FRIGATE_* viram {FRIGATE_*} no config.yml
+    volumes:
+      - ./frigate:/config
+      - ./storage:/media/frigate
+      - type: tmpfs
+        target: /tmp/cache
+        tmpfs:
+          size: 1000000000
+    ports:
+      # Só UI/API autenticada (8971), só no IP Tailscale.
+      # NÃO publicar: 5000 (API sem auth), 1984 (go2rtc API), 8554 (RTSP), 8555 (WebRTC).
+      - "${TAILSCALE_IP:?defina TAILSCALE_IP no .env}:8971:8971"
